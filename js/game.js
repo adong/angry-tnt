@@ -1221,7 +1221,7 @@
     resize();
     startLevel(0, { demo: true });
     setScreen('title');
-    document.title = TITLE;
+    document.title = `${TITLE} · Teddy & Tommy`;
     requestAnimationFrame(frame);
   }
 

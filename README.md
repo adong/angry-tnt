@@ -2,6 +2,10 @@
 
 [![Angry TNT title screen](docs/screenshot.jpg)](https://adong.github.io/angry-tnt/)
 
+Slingshot Teddy and Tommy at wobbly zombie towers. 15 levels.
+
+**中文：** 用弹弓把 Teddy 和 Tommy 弹向摇摇晃晃的僵尸塔。15 关。
+
 Press **?** any time (or tap the round **?** button on the left edge) to see the keys. The game waits while you look.
 Tap the language button under it (the A文 icon) to switch between English and 中文; the dashboard and every game remember the choice.
 
