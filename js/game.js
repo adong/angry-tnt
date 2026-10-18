@@ -1196,6 +1196,20 @@
     Scene.resize(w, h);
   }
 
+  // ---------------------------------------------------------------- English / 中文
+  // Page text translates itself (kit/lang.js + js/zh.js). Words painted on textures are redrawn here: the subway's
+  // signs and posters, and the train cars in this level. Bursts and popups pick up the language the next time they pop.
+  function relang() {
+    Scene.relang();
+    if (!G.level) return;
+    for (const m of G.staticsV) { Scene.scene.remove(m); Scene.disposeGroup(m); }
+    G.staticsV = G.level.statics.map((st) => {
+      const m = Scene.makeStatic(st);
+      Scene.scene.add(m);
+      return m;
+    });
+  }
+
   // ---------------------------------------------------------------- boot
 
   function boot() {
@@ -1203,6 +1217,7 @@
     FX.init(Scene.scene);
     thumbs = Kit.portraits([R.get('teddy'), R.get('tommy')], { size: 152 });
     bindUi();
+    if (Kit.lang) Kit.lang.onChange(relang);
     resize();
     startLevel(0, { demo: true });
     setScreen('title');

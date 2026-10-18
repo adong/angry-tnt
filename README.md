@@ -3,6 +3,7 @@
 [![Angry TNT title screen](docs/screenshot.jpg)](https://adong.github.io/angry-tnt/)
 
 Press **?** any time (or tap the round **?** button on the left edge) to see the keys. The game waits while you look.
+Tap **中文 / EN** under it to switch between English and 中文 (the dashboard and every game remember the choice).
 
 A slingshot game starring Teddy and Tommy (TNT = Teddy & Tommy). It's built with Claude Code from plain JavaScript and Three.js, on the shared Claude Games kit.
 There are no image, model or audio files. The brothers come from the kit, every texture is painted on a canvas, and every sound is synthesised.
@@ -118,6 +119,8 @@ js/scene.js           renderer, camera framing, the three worlds, blocks, heads,
 js/fx.js              particles, block chunks, comic bursts, score popups, emoji sprites, dotted guide
 js/sfx.js             sounds on top of Kit.sound
 js/game.js            screens, input, camera, the brothers, the companion, HUD, window.game hooks
+js/keys.js            the keys the ? panel shows (Kit.help)
+js/zh.js              the 中文 words: page text, toasts, canvas words and the ? panel (Kit.lang)
 tools/check-levels.js the level check (node tools/check-levels.js)
 kit/                  copy of ~/claude-games/kit (python3 ../kit/tools/sync.py .), never edited here
 dist/angry-tnt.html   the single-page build

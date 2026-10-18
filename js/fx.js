@@ -10,6 +10,7 @@
   let scene = null;
   const parts = [], chunks = {}, bursts = [], pops = [], emojis = [], guide = [], trail = [];
   const rnd = (a, b) => a + Math.random() * (b - a);
+  const tr = (s) => (Kit.lang ? Kit.lang.t(s) : s); // canvas words in the player's language (kit/lang.js)
 
   function sprite(map, opts = {}) {
     const s = new T.Sprite(new T.SpriteMaterial(Object.assign({ map, transparent: true, depthWrite: false }, opts)));
@@ -74,7 +75,8 @@
   }
 
   const burstCache = {};
-  function burstTexture(word, color) {
+  function burstTexture(en, color) {
+    const word = tr(en);
     const key = word + color;
     if (burstCache[key]) return burstCache[key];
     const [c, g] = G.makeCanvas(256, 256);
@@ -113,7 +115,8 @@
   }
 
   const popCache = {};
-  function popTexture(text, color) {
+  function popTexture(en, color) {
+    const text = tr(en);
     const key = text + color;
     if (popCache[key]) return popCache[key];
     const [c, g] = G.makeCanvas(256, 96);

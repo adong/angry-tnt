@@ -25,10 +25,11 @@ Load the scripts in this order in `index.html`, then your own:
 <script src="kit/roster.js"></script>
 <script src="kit/portraits.js"></script>
 <script src="kit/sound.js"></script>
+<script src="kit/lang.js"></script>
 <script src="kit/help.js"></script>
 ```
 
-`help.js` goes last of the kit and before the game's own scripts, so it hears keys and taps first. The game's `js/keys.js` (its `Kit.help.setup` call) can load at the very end.
+`lang.js` and `help.js` go last of the kit and before the game's own scripts, so they hear keys and taps first. The game's `js/keys.js` (its `Kit.help.setup` call) and `js/zh.js` (its 中文 dictionary) load at the very end.
 
 **Edit the kit here, in `~/claude-games/kit`, never in a game's `kit/` copy**, then re-run `sync.py` in each game that should get the change. A game that needs something new (a pose, a helper) can write it in its own JS first, and move it here when a second game wants it too.
 
@@ -127,6 +128,42 @@ Press **?** (Shift + /) in any game, or tap the round **?** button in the middle
 - **API:** `Kit.help.open()`, `close()`, `toggle()` and `isOpen()` are there for tests.
 - **Sound:** `Kit.sound.isRunning()` tells it whether to wake the sound again on close.
 
+## `Kit.lang`: English and 中文
+
+Every game plays in English or 中文.
+
+- **Switching:** a small **中文 / EN** button sits under the round ? button, and the ? panel has a 🌐 button too. Switching is live, with no reload.
+- **Remembered:**
+  - the choice is saved under `localStorage['claudeGames.lang']`;
+  - the dashboard uses the same key, so on the same site one choice carries into every game;
+  - on a first visit the language follows the browser.
+- **Page text translates itself** from the game's dictionary:
+  - every text node, placeholder, title and aria-label is checked, now and whenever the game changes the page later (a MutationObserver);
+  - so `el.textContent = 'TOMMY SAVED YOU!'` needs no code change, only a dictionary entry.
+- **Text with names or numbers in it** uses rules: a regex plus a replacement (a string or a function).
+- **Canvas text** (3D word bursts, signs drawn on textures) never reaches the page, so wrap it where it's drawn: `Kit.lang.t('POW!')`. Text drawn once and kept can be redrawn in `Kit.lang.onChange`.
+- **Word order:** an element whose Chinese needs different word order or markup can carry the whole translation in `data-zh="..."`.
+- **Opting out:** `data-no-lang` keeps an element's text as it is.
+- **The ? panel** translates its labels, column heads, notes and touch line through the same dictionary.
+- **Shared words:** the kit already knows the common ones (PLAY, PAUSED, EASY, NORMAL, "call your brother", "pause · sound"...). A game's `js/zh.js` can override any of them.
+
+```js
+// js/zh.js, loaded after js/keys.js
+Kit.lang.keep(['TEDDY', 'TOMMY']);                       // names that stay as they are
+Kit.lang.add({ 'Dodge the trains.': '躲开火车！', 'BUSTED!': '被抓住啦！' });
+Kit.lang.rule(/^(.+)'S BEST$/, '$1 的最高分');
+Kit.lang.rule(/^(\S+) (COOKIE|BANANA) FROM (.+)!$/, (m, e, item, who) => `${e} ${who} 送来的${{ COOKIE: '饼干', BANANA: '香蕉' }[item]}！`);
+Kit.lang.onChange((lang) => redrawSigns());              // only for canvas text made once and kept
+```
+
+- **Checking:** run `Kit.lang.set('zh')`, visit every screen (title, play, pause, results, each mode), and run `Kit.lang.untranslated()` until it returns `[]`. It lists the English still showing on the page, including hidden screens and tooltips, plus canvas text asked for through `t()` with no entry.
+- **Timing:** the translation happens a moment after the game writes, so a test that sets text and reads it straight back sees English. Wait a tick first.
+- **API:**
+  - `get()`, `is('zh')`, `set('en' | 'zh')` and `toggle()`;
+  - `t(en)`, or `t(en, zh)` for an inline pair;
+  - `add(dict)`, `rule(re, rep)`, `keep(list)`, `onChange(cb)` and `untranslated()`;
+  - `setup({ button: { top, left } | false })` moves or hides the 中文 / EN button.
+
 ## Testing tips
 
 - **Preview:** the Browser pane can't drive `file://` pages. Serve `~/claude-games` with `python3 -m http.server` and open `/<game>/`.
@@ -137,4 +174,4 @@ Press **?** (Shift + /) in any game, or tap the round **?** button in the middle
 
 - `metro-surfer`: the Subway Surfers-style runner, where it all started.
 - `flappy-teddy` (FlaTTy Birds), `fruit-teddy` (FruiTTy Kids), `kof-teddy` (King of Bonk!).
-- Twenty more, all listed on the dashboard (`games-for-teddy-tommy`). All 24 have the ? keys panel.
+- Twenty more, all listed on the dashboard (`games-for-teddy-tommy`). All of them have the ? keys panel and English / 中文.

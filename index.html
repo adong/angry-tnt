@@ -151,7 +151,7 @@
   .seg button.on { background: var(--yellow); }
   .help { font-size: 13px; font-weight: 700; opacity: 0.9; max-width: 560px; line-height: 1.4; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6); }
 
-  #levels .worlds { display: flex; flex-direction: column; gap: 14px; width: min(760px, 96vw); }
+  #levels .worlds { display: flex; flex-direction: column; gap: 14px; width: min(760px, 96vw, calc(100vw - 128px)); } /* clear of the ? and 中文 buttons on the left edge */
   .world { background: rgba(20, 18, 31, 0.55); border: 3px solid rgba(255, 255, 255, 0.6); border-radius: 22px; padding: 10px 12px 12px; }
   .world h3 { font-family: var(--display); font-size: 18px; text-align: left; margin: 0 0 8px 4px; font-weight: 400; }
   .world h3 span { opacity: 0.8; font-size: 14px; }
@@ -164,6 +164,7 @@
   .lv b { font-family: var(--display); font-size: 20px; }
   .lv i { font-style: normal; font-size: 9px; font-weight: 800; line-height: 1.1; min-height: 2.2em; display: flex; align-items: center; }
   .lv .st { font-size: 15px; letter-spacing: 1px; color: #d4cfc4; }
+  html.lang-zh .lv i { font-size: 12px; } /* Chinese level names need a little more size to read */
   .lv .st em { font-style: normal; color: #ffb400; text-shadow: 0 1px 0 var(--ink); }
   .lv.backyard { background: #e6ffd9; } .lv.subway { background: #dff1ff; } .lv.castle { background: #ffeedd; }
   .total { font-family: var(--display); font-size: 18px; }
@@ -217,7 +218,7 @@
 <div class="rotate" id="rotateHint">↻ Turn sideways for a bigger view</div>
 
 <div class="screen" id="title">
-  <div class="logo"><span class="l1">ANGRY</span><span class="l2"><b>T</b>N<b>T</b></span></div>
+  <div class="logo" data-no-lang><span class="l1">ANGRY</span><span class="l2"><b>T</b>N<b>T</b></span></div>
   <div class="tag">Teddy &amp; Tommy vs. the cartoon zombies! Who are you?</div>
   <div class="titlerow">
     <div class="pick" id="pick"></div>
@@ -226,7 +227,7 @@
       <button class="btn" id="playBtn">▶ PLAY</button>
     </div>
   </div>
-  <div class="help">Pull the slingshot back and let go. Tap while you fly: <b>Teddy</b> throws a 👊 punch that smashes stone, <b>Tommy</b> does his ✌️ Y pose and splits in three. Stuck? Call your brother!</div>
+  <div class="help" data-zh="把弹弓往后拉，再松手。飞的时候点一下：<b>Teddy</b> 打出 👊 重拳，连石头都能打碎；<b>Tommy</b> 摆出 ✌️ Y 字姿势，一下变成三个。打不过？叫兄弟来帮忙！">Pull the slingshot back and let go. Tap while you fly: <b>Teddy</b> throws a 👊 punch that smashes stone, <b>Tommy</b> does his ✌️ Y pose and splits in three. Stuck? Call your brother!</div>
 </div>
 
 <div class="screen hidden" id="levels">
@@ -272,6 +273,7 @@
 <script src="kit/roster.js"></script>
 <script src="kit/portraits.js"></script>
 <script src="kit/sound.js"></script>
+<script src="kit/lang.js"></script>
 <script src="kit/help.js"></script>
 <script src="js/title.js"></script>
 <script src="js/physics.js"></script>
@@ -283,5 +285,6 @@
 <script src="js/fx.js"></script>
 <script src="js/game.js"></script>
 <script src="js/keys.js"></script>
+<script src="js/zh.js"></script>
 </body>
 </html>

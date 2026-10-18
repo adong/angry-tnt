@@ -13,6 +13,7 @@
   const sr = (a, b) => a + srand() * (b - a);
 
   const BLOCK_DEPTH = 1.2;
+  const tr = (s) => (Kit.lang ? Kit.lang.t(s) : s); // words painted on signs, in the player's language (kit/lang.js)
   const S = { renderer: null, scene: null, camera: null, world: null, backdrop: null, sun: null, hemi: null, animated: [] };
 
   function init(canvas) {
@@ -325,28 +326,45 @@
         g.fillRect(0, 0, 64, 6);
       }, true),
       rock: bricks('#9aa1ab', '#6c727c'),
-      train: paint(512, 128, (g) => {
-        g.fillStyle = '#e9edf2';
-        g.fillRect(0, 0, 512, 128);
-        g.fillStyle = '#18b4ff';
-        g.fillRect(0, 84, 512, 16);
-        g.fillStyle = '#ff3d7f';
-        g.fillRect(0, 100, 512, 6);
-        for (let i = 0; i < 6; i++) {
-          g.fillStyle = '#2b3550';
-          G.roundRect(g, 20 + i * 82, 22, 56, 46, 8);
-          g.fill();
-          g.fillStyle = 'rgba(160,220,255,0.55)';
-          G.roundRect(g, 26 + i * 82, 26, 22, 18, 4);
-          g.fill();
-        }
-        g.font = `bold 18px ${G.FONT}`;
-        g.fillStyle = '#18b4ff';
-        g.fillText('T&T LINE', 380, 120);
-      }),
+      train: paint(512, 128, paintTrain),
     };
     for (const t of Object.values(staticTex)) t.userData.keep = true;
     return staticTex;
+  }
+
+  // the side of a T&T Line train car: stripes, windows and the line's name
+  function paintTrain(g) {
+    g.fillStyle = '#e9edf2';
+    g.fillRect(0, 0, 512, 128);
+    g.fillStyle = '#18b4ff';
+    g.fillRect(0, 84, 512, 16);
+    g.fillStyle = '#ff3d7f';
+    g.fillRect(0, 100, 512, 6);
+    for (let i = 0; i < 6; i++) {
+      g.fillStyle = '#2b3550';
+      G.roundRect(g, 20 + i * 82, 22, 56, 46, 8);
+      g.fill();
+      g.fillStyle = 'rgba(160,220,255,0.55)';
+      G.roundRect(g, 26 + i * 82, 26, 22, 18, 4);
+      g.fill();
+    }
+    g.font = `bold 18px ${G.FONT}`;
+    g.fillStyle = '#18b4ff';
+    g.fillText(tr('T&T LINE'), 380, 120);
+  }
+
+  // The language changed: repaint the words on signs (the train's line name, the subway's station signs and posters).
+  function relang() {
+    if (staticTex) {
+      const c = staticTex.train.image;
+      paintTrain(c.getContext('2d'));
+      staticTex.train.needsUpdate = true;
+    }
+    if (S.world) {
+      const w = S.world;
+      S.world = null;
+      setWorld(w);
+    }
   }
 
   // a fixed ground piece; physics box w x h centred at x, y
@@ -358,10 +376,10 @@
       const top = std('#ffffff', { map: tx.concrete }), side = std('#ffffff', { map: tx.concreteSide });
       m = texturedBox(st.w, st.h, d, [side, side, top, side, side, side]);
     } else if (st.look === 'train') {
-      const tr = tx.train.clone();
-      tr.needsUpdate = true;
-      tr.wrapS = T.RepeatWrapping;
-      const front = std('#ffffff', { map: tr, roughness: 0.4, metalness: 0.2 });
+      const side = tx.train.clone();
+      side.needsUpdate = true;
+      side.wrapS = T.RepeatWrapping;
+      const front = std('#ffffff', { map: side, roughness: 0.4, metalness: 0.2 });
       const body = std('#dfe4ea', { roughness: 0.4, metalness: 0.25 });
       const geo = new T.BoxGeometry(st.w, st.h, d);
       m = new T.Mesh(geo, [body, body, std('#b9c0c9', { roughness: 0.5 }), body, front, body]);
@@ -578,9 +596,9 @@
     const trunk = std('#7a4a22'), leaf = std('#4fae3c', { roughness: 0.9 }), leaf2 = std('#62c24a', { roughness: 0.9 });
     for (const [x, z, s] of [[7, -14, 1], [34, -16, 1.2], [48, -13, 0.9], [-30, -15, 1.1], [62, -18, 1.3]]) {
       const t = new T.Group();
-      const tr = new T.Mesh(new T.BoxGeometry(0.8, 4, 0.8), trunk);
-      tr.position.y = 2;
-      t.add(tr);
+      const tk = new T.Mesh(new T.BoxGeometry(0.8, 4, 0.8), trunk);
+      tk.position.y = 2;
+      t.add(tk);
       for (const [dx, dy, dz, sz, m] of [[0, 5, 0, 3.4, leaf], [-1.2, 4.2, 0.6, 2.2, leaf2], [1.3, 4.4, -0.4, 2.4, leaf2], [0.2, 6.4, 0.2, 2, leaf2]]) {
         const c = new T.Mesh(new T.BoxGeometry(sz, sz, sz), m);
         c.position.set(dx, dy, dz);
@@ -627,7 +645,7 @@
       c.textAlign = 'center';
       c.textBaseline = 'middle';
       c.fillStyle = '#ffffff';
-      c.fillText('T&T STATION', 256, 52);
+      c.fillText(tr('T&T STATION'), 256, 52);
     });
     for (const x of [-12, 26, 64]) plane(9, 1.7, new T.MeshBasicMaterial({ map: name }), x, 6.6, -13.9, g);
     const posterArt = ['🚇', '🍦', '⭐', '🏀', '🦖'];
@@ -643,7 +661,7 @@
         c.fillText(e, 96, 120);
         c.font = `22px ${G.FONT}`;
         c.fillStyle = '#14121f';
-        c.fillText(['RIDE!', 'YUM!', 'SHINE!', 'SWISH!', 'RAWR!'][i], 96, 215);
+        c.fillText(tr(['RIDE!', 'YUM!', 'SHINE!', 'SWISH!', 'RAWR!'][i]), 96, 215);
       });
       plane(2.4, 3.2, new T.MeshBasicMaterial({ map: tex }), -4 + i * 13, 8.8, -13.9, g);
     });
@@ -661,11 +679,11 @@
     const ceil = plane(280, 40, std('#3a4660'), 40, 16, -10, g);
     ceil.rotation.x = Math.PI / 2;
     // a train waiting at the far track
-    const tr = staticTextures().train.clone();
-    tr.needsUpdate = true;
-    tr.wrapS = T.RepeatWrapping;
-    tr.repeat.set(4, 1);
-    const train = new T.Mesh(new T.BoxGeometry(60, 3.4, 3), [std('#dfe4ea'), std('#dfe4ea'), std('#b9c0c9'), std('#dfe4ea'), std('#ffffff', { map: tr }), std('#dfe4ea')]);
+    const livery = staticTextures().train.clone();
+    livery.needsUpdate = true;
+    livery.wrapS = T.RepeatWrapping;
+    livery.repeat.set(4, 1);
+    const train = new T.Mesh(new T.BoxGeometry(60, 3.4, 3), [std('#dfe4ea'), std('#dfe4ea'), std('#b9c0c9'), std('#dfe4ea'), std('#ffffff', { map: livery }), std('#dfe4ea')]);
     train.position.set(-28, 1.8, -11);
     train.castShadow = true;
     g.add(train);
@@ -788,7 +806,7 @@
   }
 
   window.Scene = Object.assign(S, {
-    init, resize, frame, toWorld, pxPerMetre, makeBlock, setBlockStage, makeHead, makeStatic, setWorld, animate, render,
+    init, resize, frame, toWorld, pxPerMetre, makeBlock, setBlockStage, makeHead, makeStatic, setWorld, relang, animate, render,
     BLOCK_DEPTH, disposeGroup,
   });
 })();
