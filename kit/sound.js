@@ -147,6 +147,7 @@
     },
     suspend() { if (ctx && ctx.state === 'running') ctx.suspend(); },
     resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); },
+    isRunning: () => !!ctx && ctx.state === 'running',
 
     coin(streak) {
       const k = Math.pow(2, Math.min(streak, 14) / 24); // each coin in a streak rings a little higher

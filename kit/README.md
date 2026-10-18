@@ -25,7 +25,10 @@ Load the scripts in this order in `index.html`, then your own:
 <script src="kit/roster.js"></script>
 <script src="kit/portraits.js"></script>
 <script src="kit/sound.js"></script>
+<script src="kit/help.js"></script>
 ```
+
+`help.js` goes last of the kit and before the game's own scripts, so it hears keys and taps first. The game's `js/keys.js` (its `Kit.help.setup` call) can load at the very end.
 
 **Edit the kit here, in `~/claude-games/kit`, never in a game's `kit/` copy**, then re-run `sync.py` in each game that should get the change. A game that needs something new (a pose, a helper) can write it in its own JS first, and move it here when a second game wants it too.
 
@@ -90,17 +93,48 @@ Both use a throwaway WebGL renderer, so call them once at startup and keep the r
 ## `Kit.sound`: synth audio
 
 - **Starting:** call `Kit.sound.init()` from the first user gesture. Before that, every effect is a silent no-op.
-- **Controls:** `toggleMute()`, `isMuted()` (remembered in localStorage), and `suspend()` / `resume()` for when the tab is hidden.
+- **Controls:** `toggleMute()`, `isMuted()` (remembered in localStorage), and `suspend()` / `resume()` / `isRunning()` for when the tab is hidden.
 - **Music:** `music('play' | 'title' | 'over' | 'pause')` fades the built-in Am-F-C-G loop to the right level.
 - **Effects:** `coin(streak)`, `jump`, `roll`, `swipe`, `land`, `bump`, `stumble`, `crash`, `powerup`, `board`, `boardBreak`, `horn(vol)`, `jet`, `click`, `groan` (the zombie, with a "BOO" sting at 2.45 s), `punch`, `swish`.
 - **Your own sounds:** `tone({ f, to, type, dur, vol, at, lp })` and `hiss({ f, to, filter, q, dur, vol, at })`.
+
+## `Kit.help`: the ? keys panel
+
+Press **?** (Shift + /) in any game, or tap the round **?** button in the middle of the left edge, to see that game's keys.
+
+- **The game freezes while the panel is open, without any game code:**
+  - its animation frames are held back;
+  - the clock skips the open time: `performance.now()` and the frame timestamps both leave it out, so no timer runs down;
+  - the sound pauses;
+  - keys and taps go to the panel, never to the game.
+- **Closing:** any key (not Shift alone) or a tap anywhere closes it, and the game carries on from the frame it stopped on.
+- **Typing** in a text box (Magic 8's question) never opens it.
+- **The `/` key:** the panel swallows the `?` press, so games that use `/` as a fire key (Tank TT, Snow TT Bros) don't fire.
+- **Each game** describes its controls in `js/keys.js`:
+
+  ```js
+  Kit.help.setup({
+    title: 'King of Bonk!',
+    cols: ['Player 1', 'Player 2'],        // optional, for 2-player games
+    keys: [['walk', 'A D', '← →'], ['call your brother', 'T', 'Enter']],
+    note: 'In 1 player both sets of keys work.',
+    touch: 'The pad on the left, buttons on the right.',
+    button: { top: '12px', right: '60px' },  // optional: move the ? button, or false for none
+  });
+  ```
+
+- **Key strings** are split at spaces into keycaps. Lowercase words ("or", "hold", "double-tap") and `+ · , –` stay plain text.
+- **API:** `Kit.help.open()`, `close()`, `toggle()` and `isOpen()` are there for tests.
+- **Sound:** `Kit.sound.isRunning()` tells it whether to wake the sound again on close.
 
 ## Testing tips
 
 - **Preview:** the Browser pane can't drive `file://` pages. Serve `~/claude-games` with `python3 -m http.server` and open `/<game>/`.
 - **Hidden pane:** while the pane is hidden, `requestAnimationFrame` is throttled. Expose a `step(seconds)` hook that ticks and renders synchronously so screenshots still work.
+  - To test something that needs real frames (like the ? panel's freeze), copy the game's `dist` page and put a timer-driven `requestAnimationFrame` in a `<script>` right after `<head>`.
 
 ## Games using it
 
 - `metro-surfer`: the Subway Surfers-style runner, where it all started.
-- `flappy-teddy` (FlaTTy Birds), `fruit-teddy` (FruiTTy Kids), `kof-teddy` (KOF Teddy & Tommy).
+- `flappy-teddy` (FlaTTy Birds), `fruit-teddy` (FruiTTy Kids), `kof-teddy` (King of Bonk!).
+- Twenty more, all listed on the dashboard (`games-for-teddy-tommy`). All 24 have the ? keys panel.

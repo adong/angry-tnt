@@ -2,6 +2,8 @@
 
 [![Angry TNT title screen](docs/screenshot.jpg)](https://adong.github.io/angry-tnt/)
 
+Press **?** any time (or tap the round **?** button on the left edge) to see the keys. The game waits while you look.
+
 A slingshot game starring Teddy and Tommy (TNT = Teddy & Tommy). It's built with Claude Code from plain JavaScript and Three.js, on the shared Claude Games kit.
 There are no image, model or audio files. The brothers come from the kit, every texture is painted on a canvas, and every sound is synthesised.
 You fling the brothers, curled up into balls, at towers of wood, ice and stone that cartoon zombie heads are hiding in. A head that gets bonked pops into stars with a "BONK!". Nothing is gory or scary.
