@@ -1,0 +1,1 @@
+Copied from /Users/adong/claude-games/kit by tools/sync.py. Edit the kit there, not here, then re-sync.
