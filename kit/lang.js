@@ -1,8 +1,8 @@
 /* Kit.lang: every game in English or 中文.
 
    - The choice is remembered under one localStorage key ('claudeGames.lang'), shared by every game and the dashboard on
-     the same site, so switching on the dashboard switches the games too. The first visit follows the browser's language.
-   - A small 中文 / EN button sits under the ? button (and the ? panel has one too). Switching is live: no reload.
+     the same site, so switching on the dashboard switches the games too. A first visit is in English.
+   - A round language button (Lucide's A文 icon) sits under the ? button (and the ? panel has one too). A tap switches language, live: no reload.
    - Page text translates by itself. A dictionary (English -> 中文) is checked against every text node and every
      placeholder, title and aria-label, now and whenever the game changes the page later (a MutationObserver), so a
      game that sets `el.textContent = 'TOMMY SAVED YOU!'` needs no code change, just a dictionary entry.
@@ -27,7 +27,7 @@
 
   let lang = '';
   try { lang = localStorage.getItem(KEY) || ''; } catch (e) { /* storage blocked */ }
-  if (lang !== 'en' && lang !== 'zh') lang = /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+  if (lang !== 'en' && lang !== 'zh') lang = 'en'; // English until someone picks 中文 (Alan's choice)
 
   const dict = new Map();
   const rules = [];
@@ -127,7 +127,7 @@
     document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : 'en';
     document.documentElement.classList.toggle('lang-zh', lang === 'zh');
     if (document.body) walk(document.body);
-    if (btn) btn.textContent = lang === 'zh' ? 'EN' : '中文';
+    if (btn) btn.title = lang === 'zh' ? 'English' : '中文'; // the hover hint names the language a tap switches to
   }
 
   // ---------- switching ----------
@@ -141,20 +141,33 @@
   }
   const toggle = () => set(lang === 'zh' ? 'en' : 'zh');
 
-  // ---------- the 中文 / EN button, under the ? button ----------
+  // ---------- the language button, under the ? button and the same size ----------
+  // The icon is Lucide's "languages" (an A next to a Chinese character), from lucide-static 0.460.0.
+  // Lucide is ISC licensed: Copyright (c) Lucide Contributors 2022. Permission to use, copy, modify, and/or distribute this
+  // software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this
+  // permission notice appear in all copies. THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES.
+  const ICON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/>' +
+    '<path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>';
   let btn = null, btnOpts = {};
   const CSS = `
-#kit-lang-btn { position: fixed; z-index: 2147482000; min-width: 40px; height: 28px; padding: 0 6px; border-radius: 14px;
+#kit-lang-btn { position: fixed; z-index: 2147482000; width: 40px; height: 40px; padding: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
   border: 3px solid #fff; background: rgba(20, 18, 31, 0.62); color: #fff; cursor: pointer;
-  font: 800 12px/22px 'Rubik', system-ui, -apple-system, sans-serif; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
   -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-#kit-lang-btn:hover { background: #ffd400; color: #14121f; border-color: #14121f; }`;
+#kit-lang-btn:hover { background: #ffd400; color: #14121f; border-color: #14121f; }
+`;
+  let styled = false;
   function placeButton() {
-    if (btnOpts.button === false) { if (btn) btn.style.display = 'none'; return; }
-    if (!btn) {
+    if (!styled) {
+      styled = true;
       const style = document.createElement('style');
       style.textContent = CSS;
       document.head.appendChild(style);
+    }
+    if (btnOpts.button === false) { if (btn) btn.style.display = 'none'; return; }
+    if (!btn) {
       btn = document.createElement('button');
       btn.id = 'kit-lang-btn';
       btn.type = 'button';
@@ -165,7 +178,8 @@
     const pos = Object.assign({ top: 'calc(50% + 28px)', left: 'max(10px, env(safe-area-inset-left))' }, btnOpts.button || {});
     for (const side of ['top', 'right', 'bottom', 'left']) btn.style[side] = pos[side] == null ? '' : pos[side];
     btn.style.display = '';
-    btn.textContent = lang === 'zh' ? 'EN' : '中文';
+    btn.innerHTML = ICON;
+    btn.title = lang === 'zh' ? 'English' : '中文';
   }
   // Taps on the button never reach the game (like the ? button): one click switches the language.
   for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click', 'dblclick']) {
@@ -225,5 +239,6 @@
     apply: applyAll,
     untranslated,
     button: () => btn,
+    icon: ICON,
   };
 })();
