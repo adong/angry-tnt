@@ -110,7 +110,9 @@
     e.stopImmediatePropagation(); // no preventDefault on touches: a phone would then never send the click
     if (e.type === 'contextmenu') e.preventDefault();
     if (e.type !== 'click') return; // pointerdown and pointerup are swallowed, so one tap is one click
-    if (isOpen && Kit.lang && e.target.closest && e.target.closest('#kit-help .kh-lang')) Kit.lang.toggle(); // stays open
+    const hit = (sel) => isOpen && e.target.closest && e.target.closest(sel);
+    if (Kit.lang && hit('#kit-help .kh-lang')) Kit.lang.toggle(); // both stay open
+    else if (Kit.sound && Kit.sound.onMute && hit('#kit-help .kh-sound')) Kit.sound.toggleMute();
     else (isOpen ? close() : open());
   }
   for (const t of POINTER) window.addEventListener(t, onPointer, { capture: true, passive: false });
@@ -127,10 +129,12 @@
 @keyframes kh-pop { from { transform: scale(0.85); } } /* no fade: the card shows even where animations don't run */
 #kit-help .kh-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 #kit-help .kh-tag { font-size: 12px; font-weight: 800; letter-spacing: 2px; color: #18d4ff; }
-#kit-help .kh-lang { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 2px solid #fff; background: transparent; color: #fff;
+#kit-help .kh-btns { display: flex; gap: 8px; }
+#kit-help .kh-lang, #kit-help .kh-sound { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 2px solid #fff; background: transparent; color: #fff;
   cursor: pointer; }
-#kit-help .kh-lang svg { width: 18px; height: 18px; }
-#kit-help .kh-lang:hover { background: #ffd400; color: #14121f; border-color: #14121f; }
+#kit-help .kh-lang svg, #kit-help .kh-sound svg { width: 18px; height: 18px; }
+#kit-help .kh-sound.off { background: rgba(120, 20, 40, 0.75); }
+#kit-help .kh-lang:hover, #kit-help .kh-sound:hover { background: #ffd400; color: #14121f; border-color: #14121f; }
 #kit-help h2 { margin: 2px 0 12px; font-family: 'Rubik', system-ui, sans-serif; font-weight: 800; /* not Bungee: it's all caps and would lose the TT in FlaTTy */
   font-size: clamp(24px, 5vw, 32px); line-height: 1.05; color: #ffd400; text-shadow: 0 3px 0 #000; }
 #kit-help table { width: 100%; border-collapse: collapse; }
@@ -180,9 +184,11 @@
     const o = opts;
     const cols = o.cols || [];
     const zh = Kit.lang && Kit.lang.is('zh');
-    let html = `<div class="kh-card"><div class="kh-top"><div class="kh-tag">${t('? KEYS', '? 按键')}</div>`;
+    let html = `<div class="kh-card"><div class="kh-top"><div class="kh-tag">${t('? KEYS', '? 按键')}</div><div class="kh-btns">`;
+    const s = Kit.sound;
+    if (s && s.onMute) html += `<button type="button" class="kh-sound${s.isMuted() ? ' off' : ''}" title="${t('Sound on / off')}" aria-label="${t('Sound on / off')}" aria-pressed="${s.isMuted()}">${s.icon()}</button>`;
     if (Kit.lang) html += `<button type="button" class="kh-lang" title="${zh ? 'English' : '中文'}" aria-label="English / 中文">${Kit.lang.icon}</button>`;
-    html += `</div><h2>${esc(t(o.title || ''))}</h2><table>`;
+    html += `</div></div><h2>${esc(t(o.title || ''))}</h2><table>`;
     if (cols.length) html += `<tr><th></th>${cols.map((c) => `<th>${esc(t(c))}</th>`).join('')}</tr>`;
     for (const row of o.keys || []) {
       const [label, ...ks] = row;
@@ -196,6 +202,7 @@
     root.innerHTML = html;
   }
   if (Kit.lang) Kit.lang.onChange(() => { if (isOpen) render(); });
+  if (Kit.sound && Kit.sound.onMute) Kit.sound.onMute(() => { if (isOpen) render(); });
 
   function placeButton() {
     if (opts.button === false) { if (btn) btn.style.display = 'none'; return; }

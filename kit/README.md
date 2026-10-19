@@ -95,6 +95,9 @@ Both use a throwaway WebGL renderer, so call them once at startup and keep the r
 
 - **Starting:** call `Kit.sound.init()` from the first user gesture. Before that, every effect is a silent no-op.
 - **Controls:** `toggleMute()`, `isMuted()` (remembered in localStorage), and `suspend()` / `resume()` / `isRunning()` for when the tab is hidden.
+- **Mute, one switch for the page:** `toggleMute()`, `setMuted(bool)` and `isMuted()` are remembered in `localStorage['claudeGames.muted']`. `onMute(cb)` calls `cb(muted)` whoever flipped it, so anything that makes sound outside the kit (speechSynthesis, voice clips) should stop there.
+- **The sound button:** a round speaker button (Lucide's "volume-2" / "volume-x", ISC, credit in `sound.js`) sits under the language button. It shows only while the game's own 🔊 button isn't on screen (title, menus, results), so there's always a one-tap mute and never two. A game's own button counts when its text is just 🔊 or 🔇 (or "🔊 ON" / "🔇 OFF"). The kit keeps those buttons' icons in step when its button or the ? panel flips the sound. The ? panel has the same speaker next to its language button. `setup({ button: { top, left } | false })` moves or hides the kit button.
+- **Testing:** test muted. Run `localStorage.setItem('claudeGames.muted', '1')` in each test tab before playing, and check sound in code rather than by ear (Alan works next to the sessions).
 - **Music:** `music('play' | 'title' | 'over' | 'pause')` fades the built-in Am-F-C-G loop to the right level.
 - **Effects:** `coin(streak)`, `jump`, `roll`, `swipe`, `land`, `bump`, `stumble`, `crash`, `powerup`, `board`, `boardBreak`, `horn(vol)`, `jet`, `click`, `groan` (the zombie, with a "BOO" sting at 2.45 s), `punch`, `swish`.
 - **Your own sounds:** `tone({ f, to, type, dur, vol, at, lp })` and `hiss({ f, to, filter, q, dur, vol, at })`.

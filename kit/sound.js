@@ -136,12 +136,11 @@
     tone, // tone({ f, to, type, dur, vol, at, lp }) - one synth note, for game-specific effects
     hiss, // hiss({ f, to, filter, q, dur, vol, at }) - filtered noise
     isMuted: () => muted,
-    toggleMute() {
-      muted = !muted;
-      try { localStorage.setItem('claudeGames.muted', muted ? '1' : '0'); } catch (e) { /* storage blocked */ }
-      if (ctx) master.gain.setTargetAtTime(muted ? 0 : 0.9, now(), 0.03);
-      return muted;
-    },
+    toggleMute: () => setMuted(!muted),
+    setMuted,
+    onMute(cb) { muteListeners.push(cb); }, // cb(muted), whoever flipped it: the game, the kit button or the ? panel
+    setup(o) { btnOpts = o || {}; if (document.body) placeButton(); },
+    button: () => btn,
     music(mode) {
       if (ctx) music.gain.setTargetAtTime(MUSIC_LEVEL[mode] ?? 0.2, now(), 0.25);
     },
@@ -224,4 +223,125 @@
       hiss({ filter: 'lowpass', f: 3000, to: 400, at: 2.45, dur: 0.4, vol: 0.3 });
     },
   };
+
+  // ---------- mute: one switch for the whole page ----------
+  const muteListeners = [];
+  function setMuted(m) {
+    m = !!m;
+    if (m === muted) return muted;
+    muted = m;
+    try { localStorage.setItem('claudeGames.muted', muted ? '1' : '0'); } catch (e) { /* storage blocked */ }
+    if (ctx) master.gain.setTargetAtTime(muted ? 0 : 0.9, now(), 0.03);
+    for (const cb of muteListeners) { try { cb(muted); } catch (e) { console.error(e); } }
+    return muted;
+  }
+
+  // ---------- the sound button, under the language button and the same size ----------
+  // Every game has its own 🔊 button, but often only while playing. This one shows whenever the game's own isn't on
+  // screen (title, menus, results), so sound can always be switched off with one tap, and never doubles up with it.
+  // Icons: Lucide's "volume-2" and "volume-x". Lucide is ISC licensed: Copyright (c) Lucide Contributors 2022.
+  // Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
+  // granted, provided that the above copyright notice and this permission notice appear in all copies.
+  // THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES.
+  const SPEAKER = '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/>';
+  const svg = (inner) => '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" ' +
+    `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SPEAKER}${inner}</svg>`;
+  const ICON_ON = svg('<path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>');
+  const ICON_OFF = svg('<line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/>');
+  Kit.sound.icon = () => (muted ? ICON_OFF : ICON_ON);
+
+  let btn = null, btnOpts = {}, styled = false;
+  const CSS = `
+#kit-sound-btn { position: fixed; z-index: 2147482000; width: 40px; height: 40px; padding: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 3px solid #fff; background: rgba(20, 18, 31, 0.62); color: #fff; cursor: pointer;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+#kit-sound-btn:hover { background: #ffd400; color: #14121f; border-color: #14121f; }
+#kit-sound-btn.off { background: rgba(120, 20, 40, 0.75); }
+`;
+
+  // The game's own sound buttons: just 🔊 or 🔇 (Spot TT Animals' settings say "🔊 ON"). Word Pop's "hear the word"
+  // button also starts with 🔊 but has more text, so it isn't one.
+  const GAME_BTN = /^(🔊|🔇)(\s*(ON|OFF|开|关))?$/;
+  const isGameBtn = (b) => b !== btn && GAME_BTN.test((b.textContent || '').trim());
+  const WORD = { ON: ['ON', 'OFF'], OFF: ['ON', 'OFF'], 开: ['开', '关'], 关: ['开', '关'] };
+  function onScreen(el) {
+    if (el.checkVisibility && !el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false;
+    const r = el.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4 || r.bottom <= 0 || r.right <= 0 || r.top >= innerHeight || r.left >= innerWidth) return false;
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return !!hit && (hit === el || el.contains(hit)); // not hidden behind a menu or a fade
+  }
+  function syncGameButtons() {
+    for (const b of document.querySelectorAll('button')) {
+      if (!isGameBtn(b)) continue;
+      const word = (b.textContent.match(/ON|OFF|开|关/) || [])[0];
+      b.textContent = (muted ? '🔇' : '🔊') + (word ? ' ' + WORD[word][muted ? 1 : 0] : '');
+      if (b.hasAttribute('aria-pressed')) b.setAttribute('aria-pressed', muted ? 'true' : 'false');
+    }
+  }
+
+  function placeButton() {
+    if (!styled) {
+      styled = true;
+      const style = document.createElement('style');
+      style.textContent = CSS;
+      document.head.appendChild(style);
+    }
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'kit-sound-btn';
+      btn.type = 'button';
+      btn.title = 'Sound on / off';
+      btn.setAttribute('aria-label', 'Sound on / off');
+      btn.style.display = 'none';
+      document.body.appendChild(btn);
+    }
+    paint();
+    refresh();
+  }
+  function paint() {
+    if (!btn) return;
+    btn.innerHTML = Kit.sound.icon();
+    btn.classList.toggle('off', muted);
+    btn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+  }
+  // Show it only when the game's own sound button isn't on screen, right under the language button (or the ? button),
+  // wherever the game has moved those.
+  function refresh() {
+    if (!btn) return;
+    const own = [...document.querySelectorAll('button')].some((b) => isGameBtn(b) && onScreen(b));
+    if (btnOpts.button === false || own) { btn.style.display = 'none'; return; }
+    if (btnOpts.button) {
+      for (const side of ['top', 'right', 'bottom', 'left']) btn.style[side] = btnOpts.button[side] == null ? '' : btnOpts.button[side];
+    } else {
+      const above = ['kit-lang-btn', 'kit-help-btn'].map((id) => document.getElementById(id))
+        .find((b) => b && b.style.display !== 'none' && b.getBoundingClientRect().width > 0);
+      let top = innerHeight / 2 + 76, left = 10;
+      if (above) {
+        const r = above.getBoundingClientRect();
+        top = r.bottom + 8;
+        left = r.left;
+        if (top + 44 > innerHeight) top = Math.max(4, r.top - 48 * (above.id === 'kit-lang-btn' ? 2 : 1)); // short screen: go above the ? instead
+      }
+      btn.style.top = top + 'px';
+      btn.style.left = left + 'px';
+      btn.style.right = btn.style.bottom = '';
+    }
+    btn.style.display = '';
+  }
+  muteListeners.push(() => { paint(); syncGameButtons(); });
+
+  // Taps on the button never reach the game (like the ? and language buttons): one click switches the sound.
+  for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click', 'dblclick']) {
+    window.addEventListener(type, (e) => {
+      if (!btn || !btn.contains(e.target)) return;
+      e.stopImmediatePropagation();
+      if (e.type === 'click') { init(); setMuted(!muted); }
+    }, { capture: true, passive: false });
+  }
+  function start() { placeButton(); setInterval(refresh, 400); addEventListener('resize', refresh); }
+  if (document.body) start();
+  else document.addEventListener('DOMContentLoaded', start, { once: true });
 })();

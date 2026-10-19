@@ -48,7 +48,7 @@
     'EASY': '简单', 'NORMAL': '普通', '1 PLAYER': '单人', '2 PLAYERS': '双人', 'BEST': '最高分', 'SCORE': '得分',
     'GAME OVER': '游戏结束', 'PLAY AGAIN': '再玩一次', 'NEXT': '下一关', 'BACK': '返回', 'HOME': '主页', 'GO!': '开始！',
     'READY?': '准备好了吗？', 'YOU WIN!': '你赢了！', 'TAP ME!': '点我！', 'built with': '制作工具：',
-    'Keys (?)': '按键 (?)', 'Show the keys': '看按键',
+    'Keys (?)': '按键 (?)', 'Show the keys': '看按键', 'Sound on / off': '声音 开 / 关', 'Keys': '按键',
   };
   for (const k in COMMON) dict.set(k, COMMON[k]);
 
